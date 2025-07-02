@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 )
@@ -13,7 +12,7 @@ func normalizeURL(urlStr string) (string, error) {
 		return "", err
 	}
 
-	fmt.Printf("PATH %s: h: %s, p: %s, q: %s\n", urlStr, urlObj.Host, urlObj.Path, urlObj.RawQuery)
+	// fmt.Printf("PATH %s: h: %s, p: %s, q: %s\n", urlStr, urlObj.Host, urlObj.Path, urlObj.RawQuery)
 	if urlObj.RawQuery == "" {
 		path := urlObj.Path
 		if strings.HasSuffix(path, "/") {
