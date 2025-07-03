@@ -19,11 +19,13 @@ func main() {
 	url := os.Args[1]
 	fmt.Printf("starting crawl of: %s\n", url)
 
-	body, err := getHTML(url)
+	// body, err := getHTML(url)
+	pages := map[string]int{}
+	err := crawlPage(url, url, pages)
 	if err != nil {
-		fmt.Printf("Could not open page: %v\n", err)
+		fmt.Printf("Could not crawl page: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("BODY: %s\n", body)
+	fmt.Printf("PAGES FINAL: %v\n", pages)
 }
