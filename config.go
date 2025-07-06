@@ -7,9 +7,8 @@ import (
 	"time"
 )
 
-const maxPages = 50
-
 type config struct {
+	maxPages           int
 	pages              map[string]int
 	rawBaseURL         string
 	baseURL            *url.URL
@@ -18,14 +17,17 @@ type config struct {
 	wg                 *sync.WaitGroup
 }
 
-func NewConfig(rawBaseURL string, maxConcurrent int) (*config, error) {
+func NewConfig(rawBaseURL string, maxConcurrent, maxPages int) (*config, error) {
 
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Printf("Start config: %d => %d\n", maxConcurrent, maxPages)
+
 	return &config{
+		maxPages:           maxPages,
 		pages:              map[string]int{},
 		rawBaseURL:         rawBaseURL,
 		baseURL:            baseURL,
@@ -36,6 +38,11 @@ func NewConfig(rawBaseURL string, maxConcurrent int) (*config, error) {
 }
 
 func (cfg *config) crawlPage(rawCurrentURL string) error {
+	fmt.Printf("Start url: %s\n", rawCurrentURL)
+
+	if cfg.pagesLimitExceed() {
+		return fmt.Errorf("pages limit exceed")
+	}
 
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
@@ -57,12 +64,6 @@ func (cfg *config) crawlPage(rawCurrentURL string) error {
 	} else {
 		cfg.mu.Unlock()
 		return nil
-	}
-
-	fmt.Printf("Start url: %s\n", rawCurrentURL)
-
-	if len(cfg.pages) > maxPages {
-		return fmt.Errorf("pages limit exceed")
 	}
 
 	cfg.mu.Unlock()
@@ -96,14 +97,16 @@ func (cfg *config) crawlPage(rawCurrentURL string) error {
 			continue
 		}
 
+		if cfg.pagesLimitExceed() {
+			return fmt.Errorf("pages limit exceed")
+		}
+
 		if cfg.addPageVisit(nUrl) {
 			cfg.wg.Add(1)
-			fmt.Printf("Start: %s\n", nUrl)
 			cfg.concurrencyControl <- struct{}{}
 			go func() {
 				defer func() {
 					cfg.wg.Done()
-					fmt.Printf("Stop: %s\n", nUrl)
 				}()
 
 				time.Sleep(1 * time.Second)
@@ -124,4 +127,18 @@ func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
 	n, ok := cfg.pages[normalizedURL]
 	cfg.pages[normalizedURL] = n + 1
 	return !ok
+}
+
+func (cfg *config) pagesLimitExceed() bool {
+
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+
+	return len(cfg.pages) >= cfg.maxPages
+}
+
+func (cfg *config) showReport() {
+	for page, cnt := range cfg.pages {
+		fmt.Printf("Page: %s => %d\n", page, cnt)
+	}
 }

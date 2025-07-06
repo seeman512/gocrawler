@@ -1,29 +1,42 @@
+// usage: ./crawler URL maxConcurrency maxPages
+
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strconv"
 )
 
+func exitError(err error) {
+	fmt.Printf("Could not create config: %v\n", err)
+	os.Exit(1)
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		println("no website provided")
-		os.Exit(1)
+	if len(os.Args) < 4 {
+		exitError(errors.New("no website,maxConcurrency, maxPages provided"))
 	}
 
-	if len(os.Args) > 2 {
-		println("too many arguments provided")
-		os.Exit(1)
+	if len(os.Args) > 4 {
+		exitError(errors.New("too many arguments provided"))
 	}
 
 	url := os.Args[1]
 	fmt.Printf("starting crawl of: %s\n", url)
 
-	// body, err := getHTML(url)
-	// pages := map[string]int{}
-	// err := crawlPage(url, url, pages)
+	maxConcurrency, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		exitError(err)
+	}
 
-	cfg, err := NewConfig(url, 2)
+	maxPages, err := strconv.Atoi(os.Args[3])
+	if err != nil {
+		exitError(err)
+	}
+
+	cfg, err := NewConfig(url, maxConcurrency, maxPages)
 	if err != nil {
 		fmt.Printf("Could not create config: %v\n", err)
 		os.Exit(1)
@@ -31,11 +44,10 @@ func main() {
 
 	err = cfg.crawlPage(url)
 	if err != nil {
-		fmt.Printf("Could not crawl page: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("Stop crawl pages: %v\n", err)
 	}
 
 	cfg.wg.Wait()
-
-	fmt.Printf("PAGES FINAL: %v\n", cfg.pages)
+	cfg.showReport()
+	// fmt.Printf("PAGES FINAL: %v\n", cfg.pages)
 }

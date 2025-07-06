@@ -60,7 +60,7 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 		}
 	}
 
-	fmt.Printf("LINKS: %v\n", links)
+	// fmt.Printf("LINKS: %v\n", links)
 
 	return links, nil
 }
