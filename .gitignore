@@ -1,0 +1,5 @@
+crawler
+gocrawler
+.playbook.sh
+go.sum
+.aider*

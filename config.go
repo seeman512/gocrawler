@@ -136,9 +136,3 @@ func (cfg *config) pagesLimitExceed() bool {
 
 	return len(cfg.pages) >= cfg.maxPages
 }
-
-func (cfg *config) showReport() {
-	for page, cnt := range cfg.pages {
-		fmt.Printf("Page: %s => %d\n", page, cnt)
-	}
-}

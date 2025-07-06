@@ -3,15 +3,47 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 )
 
 func exitError(err error) {
 	fmt.Printf("Could not create config: %v\n", err)
 	os.Exit(1)
+}
+
+func printReport(pages map[string]int, baseURL string) {
+	fmt.Printf(`=============================
+  REPORT for %s
+=============================
+`, baseURL)
+
+	type item struct {
+		page string
+		cnt  int
+	}
+
+	pagesList := make([]item, len(pages))
+	i := 0
+	for k, v := range pages {
+		pagesList[i] = item{k, v}
+		i++
+	}
+
+	slices.SortFunc(pagesList, func(p1, p2 item) int {
+		return cmp.Or(
+			-cmp.Compare(p1.cnt, p2.cnt),
+			cmp.Compare(p1.page, p2.page),
+		)
+	})
+
+	for _, p := range pagesList {
+		fmt.Printf("Found %d internal links to %s\n", p.cnt, p.page)
+	}
 }
 
 func main() {
@@ -48,6 +80,5 @@ func main() {
 	}
 
 	cfg.wg.Wait()
-	cfg.showReport()
-	// fmt.Printf("PAGES FINAL: %v\n", cfg.pages)
+	printReport(cfg.pages, url)
 }
